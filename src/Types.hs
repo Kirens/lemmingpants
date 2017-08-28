@@ -9,6 +9,7 @@ module Types
     , Attendee(..)
     , Config(..)
     , MessageType(..)
+    , SpeakerList(..)
     ) where
 
 import Control.Concurrent.STM.TChan (TChan)
@@ -59,3 +60,8 @@ instance ToJSON AgendaItem where
     toEncoding (AgendaItem id' title content order) =
         pairs ("id" .= fromRowId id' <> "title" .= title <> "content" .= content <> "order" .= order)
 
+data SpeakerList = SpeakerList
+    { id         :: RowID
+    , layer      :: Int
+    , agendaItem :: AgendaItem
+    } deriving Generic
