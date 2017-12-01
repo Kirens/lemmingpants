@@ -1,3 +1,12 @@
 node_modules/*
 dist/*
 bundle.js*
+/frontend/bower_components/
+/frontend/node_modules/
+/frontend/.pulp-cache/
+/frontend/output/
+/frontend/generated-docs/
+/frontend/.psc-package/
+/frontend/.psc*
+/frontend/.purs*
+/frontend/.psa*
