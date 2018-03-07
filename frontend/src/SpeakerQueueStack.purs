@@ -43,7 +43,7 @@ type SpeakerQueueStackEffects e = (Aff (ajax :: AJAX, console :: CONSOLE | e))
 nodeToElement :: Node -> Element
 nodeToElement = unsafeCoerce
 
-component :: forall e m. H.Component HH.HTML Query Input Void (SpeakerQueueStackEffects e)
+component :: forall e. H.Component HH.HTML Query Input Void (SpeakerQueueStackEffects e)
 component =
   H.component
     { initialState: id
@@ -58,7 +58,7 @@ component =
         [ HH.h1_
           [ HH.text "Speakers" ]
         , HH.p_
-          [ HH.text ("Current speaker: " <> maybe "---" (\(Attendee a) -> a.cid) (getCurrent state)) ]
+          [ HH.text ("Current speaker: " <> maybe "---" (\(Attendee {cid}) -> cid) (getCurrent state)) ]
         , HH.button
           [ HE.onClick (HE.input_ DequeSpeaker) ]
           [ HH.text "POP!" ]
@@ -121,7 +121,7 @@ component =
         SetAddAttendeeId mid next -> H.modify (_ { addAttendeeId = mid }) *> pure next
 
       where
-        rpcHelper :: forall a. String -> H.ComponentDSL State Query Void (SpeakerQueueStackEffects e) Unit
+        rpcHelper :: String -> H.ComponentDSL State Query Void (SpeakerQueueStackEffects e) Unit
         rpcHelper url = do
           r <- H.liftAff $ AX.post url unit
           case readJSON r.response of

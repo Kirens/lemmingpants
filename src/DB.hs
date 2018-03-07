@@ -84,7 +84,7 @@ loadOrDie fn = do
      then do
           db <- DB.load fn
           case db of
-            Left  s   -> error s
+            Left  s   -> error ("ERROR: Could not load database: " <> s)
             Right db' -> return db'
      else
           return DB.empty

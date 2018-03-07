@@ -52,7 +52,9 @@ data AgendaItem = AgendaItem
 newtype FancyAgendaItem = FancyAgendaItem (Int, AgendaItem)
 
 instance ToJSON FancyAgendaItem where
-  toJSON (FancyAgendaItem (o, a)) = let (Object x) = toJSON a in Object (HM.insert "order" (toJSON o) x)
+  toJSON (FancyAgendaItem (o, a)) =
+    let (Object x) = toJSON a
+     in Object (HM.insert "order" (toJSON o) x)
 
 mkFancyAgendaItem :: Int -> AgendaItem -> FancyAgendaItem
 mkFancyAgendaItem i a = FancyAgendaItem (i,a)
