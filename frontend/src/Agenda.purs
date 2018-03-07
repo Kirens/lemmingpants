@@ -70,7 +70,7 @@ component =
       Next     next -> rpcHelper "/agenda/next/"     *> pure next
 
     where
-      rpcHelper :: _
+      rpcHelper :: forall a. String -> H.ComponentDSL State Query Void (AgendaEffects e) Unit
       rpcHelper url = do
         r <- H.liftAff $ AX.post url unit
         case readJSON r.response of
