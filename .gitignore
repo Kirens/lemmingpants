@@ -10,3 +10,5 @@ bundle.js*
 /frontend/.psc*
 /frontend/.purs*
 /frontend/.psa*
+.stack-work/
+*.db
