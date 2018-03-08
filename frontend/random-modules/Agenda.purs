@@ -1,7 +1,7 @@
 module Agenda where
 
-import Prelude (type (~>), Unit, Void, bind, const, id, pure, show, unit, ($), (*>), (+))
-import Types (SpeakerQueue)
+import Prelude
+import Types
 
 import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Console (CONSOLE, logShow)
@@ -11,6 +11,7 @@ import Data.Newtype (class Newtype)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Network.HTTP.Affjax (AJAX)
 import Network.HTTP.Affjax as AX
 import Simple.JSON (class ReadForeign, readJSON)
 
@@ -31,9 +32,9 @@ data Query a
   = Previous a
   | Next a
 
-type AgendaEffects e = (Aff (ajax :: AX.AJAX, console :: CONSOLE | e))
+type AgendaEffects e = (Aff (ajax :: AJAX, console :: CONSOLE | e))
 
-component :: forall e. H.Component HH.HTML Query Input Void (AgendaEffects e)
+component :: forall e m. H.Component HH.HTML Query Input Void (AgendaEffects e)
 component =
   H.component
     { initialState: id
@@ -69,7 +70,7 @@ component =
       Next     next -> rpcHelper "/agenda/next/"     *> pure next
 
     where
-      rpcHelper :: String -> H.ComponentDSL State Query Void (AgendaEffects e) Unit
+      rpcHelper :: forall a. String -> H.ComponentDSL State Query Void (AgendaEffects e) Unit
       rpcHelper url = do
         r <- H.liftAff $ AX.post url unit
         case readJSON r.response of

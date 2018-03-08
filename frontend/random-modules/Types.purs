@@ -2,7 +2,7 @@ module Types where
 
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
-import Simple.JSON (class ReadForeign)
+import Simple.JSON (class ReadForeign, readJSON)
 
 newtype SpeakerQueue = SpeakerQueue
   { speakers :: Array Attendee
