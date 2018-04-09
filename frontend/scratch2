@@ -1,0 +1,70 @@
+        SELECT COALESCE(json_agg(ss), '[]'::JSON) INTO msg
+        FROM (
+            SELECT * from active_speakers WHERE speaker_queue_id=NEW.id
+        ) AS ss;
+
+                      case (readJSON r1.response) :: Either MultipleErrors ({id :: Int}) of
+                        Left  es   -> traceA (foldMap renderForeignError es)
+                        Right {id} -> do
+                          as <- (\r -> parseActiveSpeakers r.response) <$>
+                            H.liftAff (AX.get (activeSpeakersUrl <> "&id=eq." <> show id))
+                          case as of
+                            Left  es  -> traceA (foldMap renderForeignError es)
+                            Right as' -> H.raise (ModifiedTop (SpeakerQueue (sq { speakers = OrdSeq.merge sq.speakers (OrdSeq.fromFoldable as') })))
+
+              case er of
+                Left  _ -> pure unit
+                Right r ->
+                  case parseInt r.response of
+                    Left es -> traceA (foldMap renderForeignError es)
+                    Right 0 -> traceA "ERROR: Next: Got 0 back. Cannot set current speaker."
+                    Right i ->
+                      if i == s.id
+                        then H.raise (ModifiedTop (SpeakerQueue (sq { speaking = Just (Speaker s), speakers = ss })))
+                        else traceA "ERROR: Next: The id of the speaker we sent and the one we got back differ."
+          *> pure next
+
+    parseInt :: Foreign -> Either MultipleErrors Int
+    parseInt = read
+
+    parseActiveSpeakers :: Foreign -> Either MultipleErrors (Array Speaker)
+    parseActiveSpeakers = read
+
+            SQ.Push  sq ->
+              H.gets (\s -> s.agenda)
+                <#> modifyCurrent
+                  (\(AgendaItem a) -> AgendaItem (a { speakerQueues = OrdSeq.insert sq a.speakerQueues }))
+                >>= (H.raise <<< ModifiedAgenda)
+            SQ.Pop      ->
+              H.gets (\s -> s.agenda)
+                <#> modifyCurrent
+                  (\(AgendaItem a) -> AgendaItem (a { speakerQueues = maybe mempty snd (OrdSeq.popGreatest a.speakerQueues) }))
+                >>= (H.raise <<< ModifiedAgenda)
+            SQ.ModifiedTop sq ->
+              H.gets (\s -> s.agenda)
+                <#> modifyCurrent (\(AgendaItem a) ->
+                  AgendaItem (a { speakerQueues = OrdSeq.insert sq (maybe mempty snd (OrdSeq.popGreatest a.speakerQueues)) }))
+                >>= (H.raise <<< ModifiedAgenda)
+
+
+
+              case  of
+                Left es -> H.raise (Flash (foldMap renderForeignError es))
+                Right i' ->
+                  if i' == c.id
+                    then H.modify (_ {agenda = newQueue })
+                    else H.raise (Flash ("The backend didn't set the wanted agenda item as the current agenda item. This is very strange. Wanted ID: " <> show c.id <> ", actual ID: " <> show i'))
+
+
+module Types.Lens where
+
+import Data.Lens (Lens)
+import Data.Lens.Record (prop)
+import Data.Symbol (SProxy(..))
+
+_id :: forall a b r. Lens { id :: a | r } { id :: b | r } a b
+_id = prop (SProxy :: SProxy "id")
+
+_speakerQueues :: forall a b r. Lens { speakerQueues :: a | r } { speakerQueues :: b | r } a b
+_speakerQueues = prop (SProxy :: SProxy "speakerQueues")
+
