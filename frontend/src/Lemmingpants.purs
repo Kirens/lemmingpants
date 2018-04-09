@@ -29,11 +29,11 @@ import Prelude (type (~>), Unit, Void, const, pure, unit, ($), (*>), (/=), (<#>)
 import Routing.Match (Match)
 import Routing.Match.Class (lit)
 import Simple.JSON (readImpl, readJSON')
-import Types.Agenda (Agenda, AgendaItem(..))
+import Types.Agenda (Agenda, AgendaItem(AgendaItem))
 import Types.Agenda as AG
 import Types.Attendee (Attendee(..))
 import Types.Speaker (Speaker(..))
-import Types.SpeakerQueue (SpeakerQueue(..))
+import Types.SpeakerQueue (SpeakerQueue(..), addSpeaker, modifySpeaker)
 import Types.Websocket (WSMsg)
 
 type ChildQuery = Coproduct5 CT.Query CO.Query CA.Query CL.Query CH.Query
@@ -134,9 +134,8 @@ component =
             -> H.ParentHTML Query ChildQuery ChildSlot (Aff (LemmingPantsEffects e))
             go cp p c i f = HH.slot' cp p c i f
 
-            s' = { token: s.token, agenda: s.agenda, attendees: s.attendees }
-
-            ohs = { pageTitle : ":D :D :D" }
+            s'  = { token: s.token, agenda: s.agenda, attendees: s.attendees }
+            ohs = { agenda: s.agenda, attendees: s.attendees }
 
     eval :: Query ~> H.ParentDSL State Query ChildQuery ChildSlot Void (Aff (LemmingPantsEffects e))
     eval =
@@ -234,18 +233,8 @@ component =
                 st.agenda)
               <#> \a' -> st { agenda = a' })
           where
-            go Insert r s@(SpeakerQueue s') =
-              Just (SpeakerQueue (s' { speakers = A.insert (newSpeaker r) s'.speakers }))
-            go Update r s@(SpeakerQueue s') =
-              case r.state of
-                "done" ->
-                  Just (SpeakerQueue (s' { speakers = A.filter (\(Speaker x) -> x.id /= r.id) s'.speakers }))
-                _      ->
-                  (A.findIndex (\(Speaker x) -> x.id == r.id) s'.speakers
-                    >>= (\i -> A.modifyAt i (const (newSpeaker r)) s'.speakers)
-                    <#> A.sort)
-                  <#> \ss' ->
-                    SpeakerQueue (s' { speakers = ss' })
+            go Insert r sq = Just $ addSpeaker (newSpeaker r) s
+            go Update r sq = Just $ modifySpeaker r.id (const $ newSpeaker r) sq
 
             newSpeaker {id, attendee_id, state, times_spoken} =
               let ts = fromMaybe 0 times_spoken
